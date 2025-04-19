@@ -46,10 +46,12 @@ export default function Home() {
 
       <section className="text-center">
         <h2 className="text-2xl font-semibold mb-4">Get Involved</h2>
-        <p className="mb-4">
-          Interested in supporting or collaborating with Vice Versa? Reach out and be part of the movement.
-        </p>
-        <Button>Contact Josh</Button>
+        <form className="space-y-4" method="POST" action="mailto:ewingjoshua.v3prototype@gmail.com">
+          <input type="text" name="name" placeholder="Your Name" className="w-full p-2 border rounded" required />
+          <input type="email" name="email" placeholder="Your Email" className="w-full p-2 border rounded" required />
+          <textarea name="message" placeholder="Your Message" className="w-full p-2 border rounded" required />
+          <Button>Send Message</Button>
+        </form>
       </section>
     </div>
   );
