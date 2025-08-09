@@ -1,0 +1,7 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/index", "permanent": true },
+    { "source": "/mobxtoken.io", "destination": "/mobx", "permanent": true },
+    { "source": "/www.mobxtoken.io", "destination": "/mobx", "permanent": true }
+  ]
+}
