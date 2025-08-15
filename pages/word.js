@@ -1,17 +1,26 @@
-﻿import useSWR from 'swr';
-const fetcher = (url) => fetch(url).then(r=>r.json());
-export default function WordPage(){
-  const { data } = useSWR('/api/word', fetcher);
-  const text = data?.text ?? '';
+﻿import { useEffect, useState } from "react";
+
+export default function Word() {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/quote-of-the-day")
+      .then(r => r.json())
+      .then(setData)
+      .catch(setErr);
+  }, []);
+
+  if (err) return <p>Error loading.</p>;
+  if (!data) return <p>Loading</p>;
+
   return (
-    <div style={{maxWidth:860, margin:'40px auto', padding:'0 16px', lineHeight:1.6}}>
+    <div style={{ padding: "20px", fontFamily: "Arial", lineHeight: 1.5 }}>
       <h1>The Word of I AM</h1>
-      <p style={{fontStyle:'italic', marginTop:-8}}>I AM THAT I AM: THE WORD</p>
-      <p style={{fontSize:12,color:'#666'}}>Released CC0 (Public Domain). Integrity hash (SHA-256):<br/>
-        <code style={{wordBreak:'break-all'}}>{data?.sha256 ?? '...'}</code>
+      <p>{data.quote}</p>
+      <p style={{ marginTop: 16 }}>
+        <a href="/the-word" style={{ textDecoration: "underline" }}>Read the full text </a>
       </p>
-      <pre style={{whiteSpace:'pre-wrap', fontFamily:'Georgia,serif'}}>{text}</pre>
-      <p><a href="/word.txt" download>Download plain text</a></p>
     </div>
   );
 }
