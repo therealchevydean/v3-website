@@ -1,4 +1,4 @@
-﻿export default function MOBXToken&Geomining() {
+﻿export default function MOBXTokenAndGeomining() {
   return (
     <div style={{ padding: "20px", fontFamily: "Arial"  }}>
       <h1>MOBX Token & Geomining</h1>
@@ -6,3 +6,4 @@
     </div>
   );
 }
+
