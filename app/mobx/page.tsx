@@ -1,9 +1,1 @@
-export default function MOBXTokenAndGeomining() {
-  return (
-    <div style={{ padding: "20px", fontFamily: "Arial"  }}>
-      <h1>MOBX Token & Geomining</h1>
-      <p>This is the MOBX Token & Geomining page placeholder.</p>
-    </div>
-  );
-}
-
+﻿export default function Page(){return (<main className="p-8"><h1 className="text-3xl font-bold">MOBX</h1><p>Presale explainer + email notify.</p></main>);}

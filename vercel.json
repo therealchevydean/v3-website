@@ -1,5 +1,40 @@
-{
-  "crons": [
-    { "path": "/api/syndicate", "schedule": "0 14 * * *" }
-  ]
+﻿{
+    "crons":  [
+                  {
+                      "path":  "/api/syndicate",
+                      "schedule":  "0 14 * * *"
+                  }
+              ],
+    "redirects":  [
+                      {
+                          "destination":  "/survival",
+                          "permanent":  true,
+                          "source":  "/survival"
+                      },
+                      {
+                          "destination":  "/materials",
+                          "permanent":  true,
+                          "source":  "/v3materials"
+                      },
+                      {
+                          "destination":  "https://example.com/discord",
+                          "permanent":  false,
+                          "source":  "/discord"
+                      },
+                      {
+                          "destination":  "https://example.com/opensea",
+                          "permanent":  false,
+                          "source":  "/opensea"
+                      },
+                      {
+                          "destination":  "https://www.buymeacoffee.com/therealchevydean",
+                          "permanent":  false,
+                          "source":  "/donate"
+                      },
+                      {
+                          "destination":  "https://example.com/ordinals",
+                          "permanent":  false,
+                          "source":  "/ordinals"
+                      }
+                  ]
 }

@@ -1,29 +1,44 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 
 type Checkin = { t: number; lat: number; lng: number; cell: string };
 type GetResp = { user: string; points: number; checkins: Checkin[] };
 type PostResp = { user: string; awarded: number; total: number; lastCell: string; error?: string };
 
+// Fix default marker icons in Next.js (use CDN to avoid asset path issues)
+const DefaultIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+(L.Marker.prototype as any).options.icon = DefaultIcon;
+
+function Recenter({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng], Math.max(map.getZoom(), 15), { animate: true });
+  }, [lat, lng, map]);
+  return null;
+}
+
 export default function MapView() {
   const [status, setStatus] = useState<"idle" | "locating" | "ready" | "tracking" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [user, setUser] = useState<string>(() => {
-    if (typeof window === "undefined") return "anon";
-    return localStorage.getItem("v3:account") || "anon";
-  });
+  const [user, setUser] = useState<string>(() => (typeof window === "undefined" ? "anon" : localStorage.getItem("v3:account") || "anon"));
   const [points, setPoints] = useState<number>(0);
   const [recent, setRecent] = useState<Checkin[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const canGeo = typeof window !== "undefined" && "geolocation" in navigator;
-
-  const prettyTime = (t: number) => {
-    const d = new Date(t);
-    return d.toLocaleString();
-  };
+  const prettyTime = (t: number) => new Date(t).toLocaleString();
 
   async function fetchSummary(u = user) {
     try {
@@ -38,8 +53,11 @@ export default function MapView() {
   }
 
   async function doCheckin(lat: number, lng: number) {
-    const body = { user, lat, lng };
-    const r = await fetch("/api/checkin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const r = await fetch("/api/checkin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user, lat, lng }),
+    });
     const data = (await r.json()) as PostResp;
     if ((data as any).error) throw new Error((data as any).error);
     setPoints(data.total);
@@ -54,12 +72,11 @@ export default function MapView() {
 
   function startTracking() {
     if (!coords) return;
-    stopTracking(); // clear any prior timer
-    // Server grants points when cell changes or >2min elapsed.
+    stopTracking();
     timerRef.current = setInterval(() => {
       if (!coords) return;
       doCheckin(coords.lat, coords.lng).catch((e) => setErr(String(e)));
-    }, 2 * 60 * 1000); // 2 minutes
+    }, 2 * 60 * 1000);
     setStatus("tracking");
   }
 
@@ -90,7 +107,6 @@ export default function MapView() {
       },
       { enableHighAccuracy: true, maximumAge: 10_000, timeout: 20_000 }
     );
-    // initial fetch (points/history)
     fetchSummary();
     return () => {
       navigator.geolocation.clearWatch(watchId);
@@ -100,9 +116,38 @@ export default function MapView() {
   }, [user, canGeo]);
 
   const last = useMemo(() => recent.at(-1), [recent]);
+  const center = coords ? [coords.lat, coords.lng] as [number, number] : [32.5783, -93.8969] as [number, number];
 
   return (
     <div className="grid gap-4">
+      {/* Map panel */}
+      <div className="rounded-xl border border-white/10 overflow-hidden">
+        <div className="h-[360px] w-full">
+          {/* Map must only render on client, we are in a client component already */}
+          <MapContainer center={center} zoom={15} scrollWheelZoom className="h-full w-full">
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {coords && (
+              <>
+                <Marker position={center}>
+                  <Popup>
+                    <div className="text-sm">
+                      <div><b>User:</b> {user}</div>
+                      <div><b>Points:</b> {points}</div>
+                      <div><b>Lat/Lng:</b> {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}</div>
+                    </div>
+                  </Popup>
+                </Marker>
+                <Recenter lat={coords.lat} lng={coords.lng} />
+              </>
+            )}
+          </MapContainer>
+        </div>
+      </div>
+
+      {/* Stats / controls */}
       <div className="rounded-xl border border-white/10 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -119,9 +164,7 @@ export default function MapView() {
           <div className="text-white/60">Status</div>
           <div className="font-mono">{status}{err ? `  ${err}` : ""}</div>
           <div className="text-white/60">Location</div>
-          <div className="font-mono">
-            {coords ? `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}` : ""}
-          </div>
+          <div className="font-mono">{coords ? `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}` : ""}</div>
           {last && (
             <div>
               <div className="text-white/60">Last Cell</div>
@@ -131,26 +174,15 @@ export default function MapView() {
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            onClick={singleCheckin}
-            disabled={!coords}
-            className="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-50"
-          >
+          <button onClick={singleCheckin} disabled={!coords} className="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-50">
             Check in once
           </button>
           {status !== "tracking" ? (
-            <button
-              onClick={startTracking}
-              disabled={!coords}
-              className="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-50"
-            >
+            <button onClick={startTracking} disabled={!coords} className="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10 disabled:opacity-50">
               Start background tracking
             </button>
           ) : (
-            <button
-              onClick={stopTracking}
-              className="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10"
-            >
+            <button onClick={stopTracking} className="rounded-lg border border-white/20 px-3 py-2 text-sm hover:bg-white/10">
               Stop tracking
             </button>
           )}
@@ -171,9 +203,7 @@ export default function MapView() {
         </ul>
       </div>
 
-      <p className="text-xs text-white/50">
-        Note: Points award when you move cells (~100m) or when >2 minutes pass in the same cell.
-      </p>
+      <p className="text-xs text-white/50">Points award when you move cells (~100m) or when &gt;2 minutes pass in the same cell.</p>
     </div>
   );
 }
