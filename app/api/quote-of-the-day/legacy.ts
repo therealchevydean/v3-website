@@ -9,3 +9,4 @@
   const quote = excerpts[new Date().getUTCDate() % excerpts.length];
   res.status(200).json({ quote });
 }
+

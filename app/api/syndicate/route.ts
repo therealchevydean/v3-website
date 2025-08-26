@@ -1,11 +1,11 @@
-// Real logic ported via legacy adapter on 2025-08-20 17:25:17
-export const runtime = 'node';
+﻿// Real logic ported via legacy adapter on 2025-08-20 17:25:17
+export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 // Load original Pages API handler (CommonJS)
-const legacy = require('./legacy.cjs');
+const legacy = require('./legacy');
 
 async function runLegacy(req: NextRequest) {
   // Build a Node/Pages-like req object
@@ -45,3 +45,5 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({ status: 'ok', source: 'app\api\syndicate' });
 }
+
+

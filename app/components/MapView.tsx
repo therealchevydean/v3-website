@@ -124,9 +124,10 @@ export default function MapView() {
       <div className="rounded-xl border border-white/10 overflow-hidden">
         <div className="h-[360px] w-full">
           {/* Map must only render on client, we are in a client component already */}
+          {/* @ts-ignore react-leaflet types in strict mode */}
           <MapContainer center={center} zoom={15} scrollWheelZoom className="h-full w-full">
+            {/* @ts-ignore react-leaflet types in strict mode */}
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {coords && (
@@ -207,3 +208,8 @@ export default function MapView() {
     </div>
   );
 }
+
+
+
+
+
